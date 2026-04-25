@@ -28,7 +28,16 @@ export async function POST(req: Request) {
     // Get or create user
     let user;
     if (userId) {
-      user = await prisma.user.findUnique({ where: { id: userId } });
+      user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          bloodType: true,
+          medicalHistory: true,
+        },
+      });
       if (!user) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
@@ -41,6 +50,13 @@ export async function POST(req: Request) {
           phone: userPhone,
           bloodType,
           medicalHistory,
+        },
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          bloodType: true,
+          medicalHistory: true,
         },
       });
     } else {
