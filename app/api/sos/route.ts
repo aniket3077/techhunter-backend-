@@ -1,14 +1,27 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../src/lib/prisma';
 
+type CreateSosBody = {
+  userId?: string;
+  locationLat?: number;
+  locationLng?: number;
+  imageUrls?: string[];
+  aiSeverity?: string;
+  aiDescription?: string;
+};
+
 // POST /api/sos
 // Payload: { userId, locationLat, locationLng, imageUrls?, aiSeverity?, aiDescription? }
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as CreateSosBody;
     const { userId, locationLat, locationLng, imageUrls, aiSeverity, aiDescription } = body;
 
-    if (!userId || locationLat === undefined || locationLng === undefined) {
+    if (
+      !userId ||
+      typeof locationLat !== 'number' ||
+      typeof locationLng !== 'number'
+    ) {
       return NextResponse.json({ error: 'Missing required fields (userId, locationLat, locationLng)' }, { status: 400 });
     }
 
@@ -19,16 +32,17 @@ export async function POST(req: Request) {
         locationLat,
         locationLng,
         imageUrls: imageUrls || [],
-        aiSeverity: aiSeverity || 'PENDING',
-        aiDescription: aiDescription || '',
+        aiSeverity: aiSeverity?.toUpperCase() || 'ANALYZING',
+        aiDescription: aiDescription?.trim() || '',
       },
     });
 
     // TODO: Emit realtime event via Pusher to notify nearby Police / Drivers
 
     return NextResponse.json({ success: true, data: emergencyCase }, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error in /api/sos:', error);
-    return NextResponse.json({ error: 'Failed to create emergency case', details: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create emergency case', details: message }, { status: 500 });
   }
 }
