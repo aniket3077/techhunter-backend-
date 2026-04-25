@@ -16,14 +16,27 @@ model User {
   id              String          @id @default(uuid())
   name            String
   phone           String          @unique
+  email           String?         @unique
   bloodType       String?
+  weight          Float?          // in kg
+  age             Int?
   medicalHistory  String?
+  allergies       String?         // JSON array of allergies
+  conditions      String?         // JSON array of medical conditions
+  medications     String?         // JSON array of medications
+  isOrganDonor    Boolean         @default(false)
+  avatarUrl       String?
+  isVerified      Boolean         @default(false)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   emergencies     EmergencyCase[]
+  medicalRecords  MedicalRecord[]
+  emergencyContacts EmergencyContact[]
+  vitals          Vitals[]
 
   @@index([phone])
   @@index([createdAt])
+  @@index([email])
 }
 
 model Hospital {
@@ -108,4 +121,58 @@ enum CaseStatus {
   PENDING
   DISPATCHED
   RESOLVED
+  CANCELLED
+}
+
+// Medical records for users
+model MedicalRecord {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  recordType  String   // e.g., "blood_report", "x_ray", "prescription"
+  title       String
+  description String?
+  fileUrl     String?  // URL to stored file
+  recordDate  DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([recordType])
+  @@index([recordDate])
+}
+
+// Emergency contacts for users
+model EmergencyContact {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  phone       String
+  relationship String  // e.g., "spouse", "parent", "friend"
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isPrimary])
+}
+
+// Vitals tracking for health monitoring
+model Vitals {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  heartRate   Int?     // BPM
+  bloodPressureSystolic Int?  // Systolic BP
+  bloodPressureDiastolic Int? // Diastolic BP
+  temperature Float?   // Celsius
+  oxygenSaturation Float? // Percentage
+  weight      Float?   // kg
+  notes       String?
+  recordedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([recordedAt])
 }

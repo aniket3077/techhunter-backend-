@@ -28,13 +28,22 @@ async function main() {
   });
 
   const user2 = await prisma.user.upsert({
-    where: { phone: '+1987654321' },
+    where: { phone: '+15551234567' },
     update: {},
     create: {
-      name: 'Jane Smith',
-      phone: '+1987654321',
-      bloodType: 'A-',
-      medicalHistory: 'Penicillin allergy',
+      name: 'Sarah Jenkins',
+      phone: '+15551234567',
+      email: 'sarah.jenkins@email.com',
+      bloodType: 'O+',
+      weight: 62,
+      age: 28,
+      medicalHistory: 'Mild Asthma',
+      allergies: '["Penicillin", "Peanuts"]',
+      conditions: '["Mild Asthma"]',
+      medications: '["Albuterol Inhaler"]',
+      isOrganDonor: true,
+      avatarUrl: 'https://i.pravatar.cc/150?img=9',
+      isVerified: true,
     },
   });
 
@@ -71,7 +80,7 @@ async function main() {
     update: {},
     create: {
       id: 'driver-1',
-      driverName: 'Mike Johnson',
+      driverName: 'David Chen',
       status: 'AVAILABLE',
       currentLat: 40.7128,
       currentLng: -74.006,
@@ -79,7 +88,7 @@ async function main() {
     },
   });
 
-  await prisma.driver.upsert({
+  const driver2 = await prisma.driver.upsert({
     where: { id: 'driver-2' },
     update: {},
     create: {
@@ -88,6 +97,58 @@ async function main() {
       status: 'AVAILABLE',
       currentLat: 40.7589,
       currentLng: -73.9851,
+      hospitalId: hospital2.id,
+    },
+  });
+
+  await prisma.driver.upsert({
+    where: { id: 'driver-3' },
+    update: {},
+    create: {
+      id: 'driver-3',
+      driverName: 'Mike Johnson',
+      status: 'DISPATCHED',
+      currentLat: 40.7260,
+      currentLng: -73.9897,
+      hospitalId: hospital1.id,
+    },
+  });
+
+  await prisma.driver.upsert({
+    where: { id: 'driver-4' },
+    update: {},
+    create: {
+      id: 'driver-4',
+      driverName: 'Robert Martinez',
+      status: 'AVAILABLE',
+      currentLat: 40.7489,
+      currentLng: -73.9680,
+      hospitalId: hospital2.id,
+    },
+  });
+
+  await prisma.driver.upsert({
+    where: { id: 'driver-5' },
+    update: {},
+    create: {
+      id: 'driver-5',
+      driverName: 'Emily Thompson',
+      status: 'OFF_DUTY',
+      currentLat: 40.7282,
+      currentLng: -73.9942,
+      hospitalId: hospital1.id,
+    },
+  });
+
+  await prisma.driver.upsert({
+    where: { id: 'driver-6' },
+    update: {},
+    create: {
+      id: 'driver-6',
+      driverName: 'James Wilson',
+      status: 'AVAILABLE',
+      currentLat: 40.7614,
+      currentLng: -73.9776,
       hospitalId: hospital2.id,
     },
   });
@@ -107,7 +168,7 @@ async function main() {
     },
   });
 
-  await prisma.policeUnit.upsert({
+  const police2 = await prisma.policeUnit.upsert({
     where: { id: 'police-2' },
     update: {},
     create: {
@@ -143,8 +204,22 @@ async function main() {
       aiSeverity: 'CRITICAL',
       aiDescription: 'Multiple vehicle collision with injuries',
       imageUrls: ['https://example.com/accident2.jpg'],
-      assignedDriverId: driver1.id,
+      assignedDriverId: driver2.id,
       assignedPoliceId: police1.id,
+    },
+  });
+
+  await prisma.emergencyCase.create({
+    data: {
+      userId: user1.id,
+      status: 'DISPATCHED',
+      locationLat: 40.7260,
+      locationLng: -73.9897,
+      aiSeverity: 'HIGH',
+      aiDescription: 'Emergency medical transport required',
+      imageUrls: ['https://example.com/accident3.jpg'],
+      assignedDriverId: driver1.id,
+      assignedPoliceId: police2.id,
     },
   });
 
