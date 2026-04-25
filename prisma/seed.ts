@@ -1,11 +1,21 @@
+import 'dotenv/config';
 import { PrismaClient } from '../src/generated/prisma';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL or DIRECT_URL is required to run the seed script.');
+}
+
+const adapter = new PrismaPg(new pg.Pool({ connectionString }));
+
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('🌱 Starting database seed...');
+  console.log('Starting database seed...');
 
-  // Create Users
   const user1 = await prisma.user.upsert({
     where: { phone: '+1234567890' },
     update: {},
@@ -28,9 +38,8 @@ async function main() {
     },
   });
 
-  console.log('✅ Created users');
+  console.log('Created users');
 
-  // Create Hospitals
   const hospital1 = await prisma.hospital.upsert({
     where: { id: 'hospital-1' },
     update: {},
@@ -38,7 +47,7 @@ async function main() {
       id: 'hospital-1',
       name: 'City General Hospital',
       locationLat: 40.7128,
-      locationLng: -74.0060,
+      locationLng: -74.006,
       availableBeds: 15,
     },
   });
@@ -55,9 +64,8 @@ async function main() {
     },
   });
 
-  console.log('✅ Created hospitals');
+  console.log('Created hospitals');
 
-  // Create Drivers
   const driver1 = await prisma.driver.upsert({
     where: { id: 'driver-1' },
     update: {},
@@ -66,12 +74,12 @@ async function main() {
       driverName: 'Mike Johnson',
       status: 'AVAILABLE',
       currentLat: 40.7128,
-      currentLng: -74.0060,
+      currentLng: -74.006,
       hospitalId: hospital1.id,
     },
   });
 
-  const driver2 = await prisma.driver.upsert({
+  await prisma.driver.upsert({
     where: { id: 'driver-2' },
     update: {},
     create: {
@@ -84,9 +92,8 @@ async function main() {
     },
   });
 
-  console.log('✅ Created drivers');
+  console.log('Created drivers');
 
-  // Create Police Units
   const police1 = await prisma.policeUnit.upsert({
     where: { id: 'police-1' },
     update: {},
@@ -96,11 +103,11 @@ async function main() {
       precinct: 'Precinct 1',
       status: 'AVAILABLE',
       currentLat: 40.7128,
-      currentLng: -74.0060,
+      currentLng: -74.006,
     },
   });
 
-  const police2 = await prisma.policeUnit.upsert({
+  await prisma.policeUnit.upsert({
     where: { id: 'police-2' },
     update: {},
     create: {
@@ -113,14 +120,13 @@ async function main() {
     },
   });
 
-  console.log('✅ Created police units');
+  console.log('Created police units');
 
-  // Create Emergency Cases
-  const case1 = await prisma.emergencyCase.create({
+  await prisma.emergencyCase.create({
     data: {
       userId: user1.id,
       status: 'PENDING',
-      locationLat: 40.7130,
+      locationLat: 40.713,
       locationLng: -74.0065,
       aiSeverity: 'HIGH',
       aiDescription: 'Possible vehicle collision detected',
@@ -128,11 +134,11 @@ async function main() {
     },
   });
 
-  const case2 = await prisma.emergencyCase.create({
+  await prisma.emergencyCase.create({
     data: {
       userId: user2.id,
       status: 'DISPATCHED',
-      locationLat: 40.7590,
+      locationLat: 40.759,
       locationLng: -73.9855,
       aiSeverity: 'CRITICAL',
       aiDescription: 'Multiple vehicle collision with injuries',
@@ -142,14 +148,13 @@ async function main() {
     },
   });
 
-  console.log('✅ Created emergency cases');
-
-  console.log('🎉 Seed completed successfully!');
+  console.log('Created emergency cases');
+  console.log('Seed completed successfully!');
 }
 
 main()
-  .catch((e) => {
-    console.error('❌ Error seeding database:', e);
+  .catch((error) => {
+    console.error('Error seeding database:', error);
     process.exit(1);
   })
   .finally(async () => {

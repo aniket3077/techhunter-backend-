@@ -3,6 +3,10 @@ import { prisma } from '../../../src/lib/prisma';
 
 type CreateSosBody = {
   userId?: string;
+  userName?: string;
+  userPhone?: string;
+  bloodType?: string;
+  medicalHistory?: string;
   locationLat?: number;
   locationLng?: number;
   imageUrls?: string[];
@@ -11,24 +15,42 @@ type CreateSosBody = {
 };
 
 // POST /api/sos
-// Payload: { userId, locationLat, locationLng, imageUrls?, aiSeverity?, aiDescription? }
+// Payload: { userId?, userName?, userPhone?, locationLat, locationLng, imageUrls?, aiSeverity?, aiDescription? }
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as CreateSosBody;
-    const { userId, locationLat, locationLng, imageUrls, aiSeverity, aiDescription } = body;
+    const { userId, userName, userPhone, bloodType, medicalHistory, locationLat, locationLng, imageUrls, aiSeverity, aiDescription } = body;
 
-    if (
-      !userId ||
-      typeof locationLat !== 'number' ||
-      typeof locationLng !== 'number'
-    ) {
-      return NextResponse.json({ error: 'Missing required fields (userId, locationLat, locationLng)' }, { status: 400 });
+    if (typeof locationLat !== 'number' || typeof locationLng !== 'number') {
+      return NextResponse.json({ error: 'Missing required fields (locationLat, locationLng)' }, { status: 400 });
+    }
+
+    // Get or create user
+    let user;
+    if (userId) {
+      user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+    } else if (userPhone) {
+      user = await prisma.user.upsert({
+        where: { phone: userPhone },
+        update: {},
+        create: {
+          name: userName || 'Anonymous',
+          phone: userPhone,
+          bloodType,
+          medicalHistory,
+        },
+      });
+    } else {
+      return NextResponse.json({ error: 'Either userId or userPhone is required' }, { status: 400 });
     }
 
     // Create the emergency case in the database
     const emergencyCase = await prisma.emergencyCase.create({
       data: {
-        userId,
+        userId: user.id,
         locationLat,
         locationLng,
         imageUrls: imageUrls || [],
