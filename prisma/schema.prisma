@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String          @id @default(uuid())
+  name            String
+  phone           String          @unique
+  bloodType       String?
+  medicalHistory  String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  emergencies     EmergencyCase[]
+}
+
+model Hospital {
+  id            String     @id @default(uuid())
+  name          String
+  locationLat   Float
+  locationLng   Float
+  availableBeds Int        @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  drivers       Driver[]
+}
+
+model Driver {
+  id             String          @id @default(uuid())
+  driverName     String
+  status         UnitStatus      @default(AVAILABLE)
+  currentLat     Float?
+  currentLng     Float?
+  hospitalId     String?
+  hospital       Hospital?       @relation(fields: [hospitalId], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  assignedCases  EmergencyCase[]
+}
+
+model PoliceUnit {
+  id             String          @id @default(uuid())
+  officerName    String
+  precinct       String
+  status         UnitStatus      @default(AVAILABLE)
+  currentLat     Float?
+  currentLng     Float?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  assignedCases  EmergencyCase[]
+}
+
+model EmergencyCase {
+  id                   String      @id @default(uuid())
+  userId               String
+  user                 User        @relation(fields: [userId], references: [id])
+  status               CaseStatus  @default(PENDING)
+  locationLat          Float
+  locationLng          Float
+  aiSeverity           String?     // e.g., "HIGH", "CRITICAL", "LOW"
+  aiDescription        String?     // Details from the vision model
+  imageUrls            String[]    // URLs of uploaded accident photos
+  assignedDriverId     String?
+  assignedDriver       Driver?     @relation(fields: [assignedDriverId], references: [id])
+  assignedPoliceId     String?
+  assignedPolice       PoliceUnit? @relation(fields: [assignedPoliceId], references: [id])
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+}
+
+enum UnitStatus {
+  AVAILABLE
+  DISPATCHED
+  OFF_DUTY
+}
+
+enum CaseStatus {
+  PENDING
+  DISPATCHED
+  RESOLVED
+}
